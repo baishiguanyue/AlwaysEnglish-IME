@@ -1,0 +1,44 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+dist/
+_nul
+.vs/
+.codegraph/
+.claude/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.suo
+*.user
+*.vcxproj.user
+
+# Compiled files
+*.obj
+*.o
+*.exe
+*.dll
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.iobj
+
+# Logs
+*.log
+.git.bak/
+开源适合度评估.md
+AlwaysEnglish-IME/
