@@ -6,7 +6,7 @@
 | 版本 | V1.3 |
 | 日期 | 2026-08-28 |
 | 平台 | 仅 Windows 10、Windows 11 x64 |
-| 产品名默认 | KeyboardMethod（安装时可改） |
+| 产品名默认 | AlwaysEnglish-IME（安装时可改；早期版本曾名 KeyboardMethod） |
 | 作者 | bsgy |
 | 交付形态 | 第一阶段：输入法本体 DLL；第二阶段：图形安装程序（`Setup.exe`） |
 
@@ -28,7 +28,7 @@
 
 本产品用一个**永远直出的空壳 TIP**满足上述合同，不是拼音引擎。
 
-切到哪家输入法，用 Windows 自带的语言栏 / Win + Space 即可。本产品不处理切换，也不另做「一键切到 KeyboardMethod」的快捷键。
+切到哪家输入法，用 Windows 自带的语言栏 / Win + Space 即可。本产品不处理切换，也不另做「一键切到 AlwaysEnglish-IME」的快捷键。
 
 ---
 
@@ -49,7 +49,7 @@
 ### 3.2 第二阶段（安装器）
 
 - Win10/Win11 上以 `Setup.exe` 安装、卸载。
-- 通用向导。自定义内容集中在**一页**：显示名输入框（默认 `KeyboardMethod`）、目标语言下拉（读取系统已安装语言）、以及「安装后加入语言列表」（默认勾选）。显示名、目标语言必填，空值不能继续。
+- 通用向导。自定义内容集中在**一页**：显示名输入框（默认 `AlwaysEnglish-IME`）、目标语言下拉（读取系统已安装语言）、以及「安装后加入语言列表」（默认勾选）。显示名、目标语言必填，空值不能继续。
 - 之后用系统自带方式切换，不自动切到本 IME。
 - 用户不接触 `.bat` / `regsvr32`。
 - 正式外发再签名（见第 8 节）。
@@ -74,7 +74,7 @@
 
 | 阶段 | 交付物 | 说明 |
 |---|---|---|
-| 第一阶段 | `KeyboardMethod.dll` | 开发者可用 `regsvr32` 调试 |
+| 第一阶段 | `AlwaysEnglishIME.dll` | 开发者可用 `regsvr32` 调试 |
 | 第二阶段 | `Setup.exe` | 图形安装向导；需管理员权限 |
 | 第二阶段 | 卸载入口 | 「设置 → 应用」或控制面板中可见、可完整卸载 |
 
@@ -117,7 +117,7 @@
 | F-24 | 卸载删除文件、注销 COM、从语言列表移除、清理卸载注册表；不得残留失效输入法项 | P0 |
 | F-25 | 静默安装/卸载（`/SILENT` 或等价）；命令行接口预留 | P1 |
 | F-26 | 安装路径默认 `Program Files`，允许自定义 | P2 |
-| F-27 | 安装向导一页完成：显示名输入框（默认 `KeyboardMethod`，去空白后非空）；目标语言下拉（系统已安装语言，必选）。校验失败停留在本页并提示 | P0 |
+| F-27 | 安装向导一页完成：显示名输入框（默认 `AlwaysEnglish-IME`，去空白后非空）；目标语言下拉（系统已安装语言，必选）。校验失败停留在本页并提示 | P0 |
 
 ---
 
@@ -141,7 +141,7 @@
 
 - `ITfInputProcessorProfileMgr::RegisterProfile`（及 Unregister）。
 - `InstallLayoutOrTip` 加入用户语言列表；TIP GUID 形式，不是只写键盘 KLID。
-- 第一阶段调试可写死 `0x0804` + `KeyboardMethod`。
+- 第一阶段调试可写死 `0x0804` + `AlwaysEnglish-IME`。
 - 第二阶段注册须接受显示名与 LANGID，由安装器传入。
 - CLSID、Profile GUID 一经发布不得随意更换。
 
@@ -159,7 +159,7 @@
 ```text
 Setup.exe
  └── 安装后目录（示例）
-     ├── KeyboardMethod.dll   # x64
+     ├── AlwaysEnglishIME.dll # x64
      ├── uninstall.exe        # 或由安装器生成的卸载项
      └── 可选：许可证、帮助
 ```
@@ -169,7 +169,7 @@ Setup.exe
 向导页面：
 
 1. 欢迎
-2. 安装目录（默认 `Program Files\KeyboardMethod`）
+2. 安装目录（默认 `Program Files\AlwaysEnglish-IME`）
 3. **选项（一页）**：显示名；目标语言（系统已安装列表）；加入语言列表（默认勾选）
 4. 进度 → 完成
 
@@ -204,7 +204,7 @@ Setup.exe
 
 ### 9.2 第二阶段（安装器）
 
-1. **安装**：干净 Win10、Win11 各一台，双击 `Setup.exe` 能装完；设置里用户所选语言下能看到本 IME（默认名 `KeyboardMethod`）。
+1. **安装**：干净 Win10、Win11 各一台，双击 `Setup.exe` 能装完；设置里用户所选语言下能看到本 IME（默认名 `AlwaysEnglish-IME`）。
 2. **卸载**：设置中不再出现本 IME，Program Files 无残留核心 DLL。
 3. **负面**：安装过程不要求用户手动运行 `.reg` / `.bat` / `regsvr32`；不要求用户学习任何本产品自带的切换快捷键。
 
@@ -236,7 +236,7 @@ Setup.exe
 
 ## 12. 已确认事项
 
-1. 产品名默认 **KeyboardMethod**；安装器一页里用输入框修改，必填。
+1. 产品名默认 **AlwaysEnglish-IME**；安装器一页里用输入框修改，必填。
 2. 目标语言从系统已安装列表选，必选；有中文简体则默认它。不提供未安装语言。
 3. 「加入语言列表」与上面两项同一页，默认勾选；不强制改系统默认，也不强制切过去。
 4. 切换只用系统原生入口；不提供直达本 IME 的快捷键。

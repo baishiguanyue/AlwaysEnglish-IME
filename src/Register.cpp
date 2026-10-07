@@ -75,14 +75,14 @@ static HRESULT InstallOrRemoveTip(REFCLSID clsid, REFGUID guidProfile, LANGID la
     return S_OK;
 }
 
-// 返回 HKLM 中记录的 LANGID；没有记录（全新安装）时返回 0。
-static LANGID ReadStoredLangIdRaw()
+// 读取 HKLM\<pszKey> 下的 LangId；键或值不存在、类型不对时返回 0。
+static LANGID ReadLangIdFromKey(LPCWSTR pszKey)
 {
     HKEY hKey = NULL;
     DWORD lang = 0;
     DWORD cb = sizeof(lang);
     DWORD type = 0;
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, g_wszInstallKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, pszKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
     {
         if (RegQueryValueExW(hKey, L"LangId", NULL, &type, reinterpret_cast<LPBYTE>(&lang), &cb) != ERROR_SUCCESS ||
             type != REG_DWORD)
@@ -92,6 +92,18 @@ static LANGID ReadStoredLangIdRaw()
         RegCloseKey(hKey);
     }
     return static_cast<LANGID>(lang);
+}
+
+// 返回 HKLM 中记录的 LANGID；没有记录（全新安装）时返回 0。
+// 先读当前键，读不到再读旧产品名 KeyboardMethod 的键（从 1.1.x 升级、尚未重新注册时）。
+static LANGID ReadStoredLangIdRaw()
+{
+    LANGID lang = ReadLangIdFromKey(g_wszInstallKey);
+    if (lang == 0)
+    {
+        lang = ReadLangIdFromKey(g_wszLegacyInstallKey);
+    }
+    return lang;
 }
 
 // 卸载/加入列表等需要一个具体 LANGID 的场景：没有记录时回落到默认 0x0804。
@@ -119,12 +131,18 @@ static HRESULT StoreInstallState(LPCWSTR pszDisplayName, LANGID langid)
                             static_cast<DWORD>((wcslen(pszDisplayName) + 1) * sizeof(wchar_t)));
     }
     RegCloseKey(hKey);
+    if (st == ERROR_SUCCESS)
+    {
+        // 新键写入成功后再删除旧产品名下的键（迁移完成）；失败时保留旧记录供卸载读取。
+        SHDeleteKeyW(HKEY_LOCAL_MACHINE, g_wszLegacyInstallKey);
+    }
     return HRESULT_FROM_WIN32(st);
 }
 
 static void DeleteInstallState()
 {
     SHDeleteKeyW(HKEY_LOCAL_MACHINE, g_wszInstallKey);
+    SHDeleteKeyW(HKEY_LOCAL_MACHINE, g_wszLegacyInstallKey);
 }
 
 static HRESULT UnregisterCategoriesFor(REFCLSID clsid)

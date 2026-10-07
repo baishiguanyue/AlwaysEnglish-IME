@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(KeyboardMethod)
+project(AlwaysEnglishIME)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +22,7 @@ set(HEADERS
 )
 
 set(RESOURCE
-    resources/KeyboardMethod.rc
+    resources/AlwaysEnglishIME.rc
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS} ${RESOURCE})
@@ -40,14 +40,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SUFFIX ".dll"
-    OUTPUT_NAME "KeyboardMethod"
+    OUTPUT_NAME "AlwaysEnglishIME"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/KeyboardMethod.def.in
-    ${CMAKE_BINARY_DIR}/KeyboardMethod.def
+    ${CMAKE_CURRENT_SOURCE_DIR}/AlwaysEnglishIME.def.in
+    ${CMAKE_BINARY_DIR}/AlwaysEnglishIME.def
     @ONLY
 )
 
@@ -60,10 +60,10 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE
-    "/DEF:${CMAKE_BINARY_DIR}/KeyboardMethod.def"
+    "/DEF:${CMAKE_BINARY_DIR}/AlwaysEnglishIME.def"
     # Discard the import library: a real path is used instead of NUL because
     # recent MSBuild versions try to create "\\.\NUL\" and fail (MSB3191).
-    "/IMPLIB:${CMAKE_BINARY_DIR}/KeyboardMethod-implib.lib"
+    "/IMPLIB:${CMAKE_BINARY_DIR}/AlwaysEnglishIME-implib.lib"
     /DYNAMICBASE
     /NXCOMPAT
     /HIGHENTROPYVA

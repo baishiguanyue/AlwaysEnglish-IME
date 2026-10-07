@@ -23,16 +23,16 @@ for %%P in (
     "..\out\build\x64-Release\bin\Release"
     "..\out\build\x64-Release\bin"
 ) do (
-    if exist "%%~fP\KeyboardMethod.dll" if exist "%%~fP\imeinst.exe" (
+    if exist "%%~fP\AlwaysEnglishIME.dll" if exist "%%~fP\imeinst.exe" (
         set "DIST=%%~fP"
         goto :found
     )
 )
 
-echo KeyboardMethod.dll / imeinst.exe not found. Build the project first.
+echo AlwaysEnglishIME.dll / imeinst.exe not found. Build the project first.
 exit /b 1
 
 :found
 echo Using: %DIST%
-"%ISCC%" /DDistDir="%DIST%" KeyboardMethod.iss
+"%ISCC%" /DDistDir="%DIST%" AlwaysEnglishIME.iss
 exit /b %ERRORLEVEL%

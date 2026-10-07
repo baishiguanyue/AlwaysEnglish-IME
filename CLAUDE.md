@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Windows Text Service Framework (TSF) DLL** that implements an always-English input method profile. It intentionally does not intercept keyboard input; Windows and the application handle keys through the registered US QWERTY substitute layout.
+This is a **Windows Text Service Framework (TSF) DLL** that implements an always-English input method profile. Product/display name: **AlwaysEnglish-IME** (formerly `KeyboardMethod`); file names, code identifiers, the DLL, and the CMake target use `AlwaysEnglishIME` (no hyphen). It intentionally does not intercept keyboard input; Windows and the application handle keys through the registered US QWERTY substitute layout.
 
 ## Build Commands
 
@@ -19,11 +19,11 @@ cmake --build out/build/x64-Release --config Release
 ```
 
 **Build outputs:**
-- `out/build/x64-Release/bin/Release/KeyboardMethod.dll`
+- `out/build/x64-Release/bin/Release/AlwaysEnglishIME.dll`
 - `out/build/x64-Release/bin/Release/imeinst.exe`
-- `out/installer/KeyboardMethod-Setup.exe`
+- `out/installer/AlwaysEnglish-IME-Setup.exe`
 
-**Installation:** install and uninstall only via `out/installer/KeyboardMethod-Setup.exe` (and its uninstaller). The installer drives registration through `imeinst.exe`; there are no manual registration scripts, and `regsvr32` is not part of the supported workflow.
+**Installation:** install and uninstall only via `out/installer/AlwaysEnglish-IME-Setup.exe` (and its uninstaller). The installer drives registration through `imeinst.exe`; there are no manual registration scripts, and `regsvr32` is not part of the supported workflow.
 
 `scripts/Remove-DefaultUserTip.ps1` is a standalone helper that removes this TIP's leftovers from the `.Default` profile (logon/lock screen). It is a dry run by default; `-Apply` (elevated) actually removes entries. Keep its hardcoded GUIDs in sync with `include/Globals.h`.
 
@@ -43,7 +43,7 @@ The project follows a standard COM-based TSF architecture with these key compone
 
 ### COM Entry Points
 
-The DLL exports four standard COM functions (defined in `KeyboardMethod.def.in`):
+The DLL exports four standard COM functions (defined in `AlwaysEnglishIME.def.in`):
 - `DllCanUnloadNow` - Check if DLL can be unloaded
 - `DllGetClassObject` - Create class factory
 - `DllRegisterServer` - Register COM server and TSF profile
@@ -65,7 +65,9 @@ This service intentionally does not modify text. It has no `ITfKeyEventSink`, co
 
 Registration uses the TSF profile/category COM APIs and writes these project-owned registry locations:
 - `HKCR\CLSID\` - COM class registration
-- `HKLM\Software\bsgy\KeyboardMethod` - Installed display name and LANGID
+- `HKLM\Software\bsgy\AlwaysEnglishIME` - Installed display name and LANGID. Reads fall back to the legacy pre-rename key `HKLM\Software\bsgy\KeyboardMethod`; registration deletes the legacy key after writing the new one, and uninstall deletes both.
+
+Upgrade from the pre-rename `KeyboardMethod` 1.1.x is supported: the Inno `AppId`, CLSID, and profile GUID are unchanged; the installer removes the old `{app}\KeyboardMethod.dll` after `imeinst register` succeeds (delete-on-reboot if it is in use), and the uninstaller also cleans it up.
 
 `InstallLayoutOrTip` adds/removes the profile from the current user's language list and the `.Default` secure-desktop profile.
 

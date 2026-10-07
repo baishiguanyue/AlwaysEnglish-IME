@@ -375,7 +375,7 @@ HRESULT CTextService::_ApplyAlwaysEnglishState(BOOL fRespectTransitionWindow)
     if (FAILED(hrClose) || FAILED(hrConv) || FAILED(hrSent))
     {
         char msg[256];
-        sprintf_s(msg, "KeyboardMethod: SetCompartmentDWORD failed: close=0x%08X conv=0x%08X sent=0x%08X\r\n",
+        sprintf_s(msg, "AlwaysEnglishIME: SetCompartmentDWORD failed: close=0x%08X conv=0x%08X sent=0x%08X\r\n",
                   hrClose, hrConv, hrSent);
         OutputDebugStringA(msg);
     }

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Removes KeyboardMethod TIP entries from the .Default user profile
+    Removes AlwaysEnglish-IME (formerly KeyboardMethod) TIP entries from the .Default user profile
     (HKEY_USERS\.DEFAULT), i.e. what Setup's "available on logon / lock screen"
     option (InstallLayoutOrTip with ILOT_DEFUSER4) added.
 
@@ -51,8 +51,8 @@ $ErrorActionPreference = 'Stop'
 
 # Keep in sync with include/Globals.h.
 $TipIds = @(
-    @{ Name = 'KeyboardMethod';               Clsid = '{FC452B85-19F4-47E5-AD40-FD523298A8C7}'; Profile = '{0BF7DD25-41DC-400F-887D-0A80AC37F062}' },
-    @{ Name = 'KeyboardMethod (legacy test)'; Clsid = '{A1B2C3D4-E5F6-7890-ABCD-EF0123456789}'; Profile = '{B1C2D3E4-F5A6-7890-CDEF-0123456789AB}' }
+    @{ Name = 'AlwaysEnglish-IME';               Clsid = '{FC452B85-19F4-47E5-AD40-FD523298A8C7}'; Profile = '{0BF7DD25-41DC-400F-887D-0A80AC37F062}' },
+    @{ Name = 'AlwaysEnglish-IME (legacy test)'; Clsid = '{A1B2C3D4-E5F6-7890-ABCD-EF0123456789}'; Profile = '{B1C2D3E4-F5A6-7890-CDEF-0123456789AB}' }
 )
 
 $DefaultRoot    = 'Registry::HKEY_USERS\.DEFAULT'
@@ -281,7 +281,7 @@ function Remove-RegistryEntries($entries) {
 # ---------------------------------------------------------------------------
 
 $entries = Find-DefaultEntries
-Show-Entries $entries 'KeyboardMethod entries found in HKEY_USERS\.DEFAULT:'
+Show-Entries $entries 'AlwaysEnglish-IME entries found in HKEY_USERS\.DEFAULT:'
 
 if (-not $Apply) {
     Write-Host ''
@@ -330,6 +330,6 @@ if ($left.Count -eq 0) {
 if (-not $WhatIfPreference) {
     $final = Find-DefaultEntries
     Write-Host ''
-    Show-Entries $final 'Remaining KeyboardMethod entries in HKEY_USERS\.DEFAULT:'
+    Show-Entries $final 'Remaining AlwaysEnglish-IME entries in HKEY_USERS\.DEFAULT:'
     if ($final.Count -gt 0) { exit 2 }
 }

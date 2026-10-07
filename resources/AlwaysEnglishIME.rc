@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "bsgy"
-            VALUE "FileDescription", "KeyboardMethod Text Service"
+            VALUE "FileDescription", "AlwaysEnglish-IME Text Service"
             VALUE "FileVersion", "1, 1, 1, 0"
-            VALUE "InternalName", "KeyboardMethod"
+            VALUE "InternalName", "AlwaysEnglishIME"
             VALUE "LegalCopyright", "Copyright (C) 2026 bsgy. Licensed under GPL-3.0."
-            VALUE "OriginalFilename", "KeyboardMethod.dll"
-            VALUE "ProductName", "KeyboardMethod Text Service"
+            VALUE "OriginalFilename", "AlwaysEnglishIME.dll"
+            VALUE "ProductName", "AlwaysEnglish-IME Text Service"
             VALUE "ProductVersion", "1, 1, 1, 0"
         END
     END

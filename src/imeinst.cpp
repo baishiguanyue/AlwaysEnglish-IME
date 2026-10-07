@@ -28,7 +28,7 @@ static BOOL SiblingDllPath(wchar_t *psz, size_t cch)
         return FALSE;
     }
     slash[1] = L'\0';
-    return SUCCEEDED(StringCchCatW(psz, cch, L"KeyboardMethod.dll"));
+    return SUCCEEDED(StringCchCatW(psz, cch, L"AlwaysEnglishIME.dll"));
 }
 
 static LANGID ParseLangId(const wchar_t *psz)

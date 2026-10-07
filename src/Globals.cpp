@@ -1,8 +1,11 @@
 #include "Globals.h"
 #include <strsafe.h>
 
-const wchar_t g_wszClassName[] = L"KeyboardMethod";
-const wchar_t g_wszInstallKey[] = L"Software\\bsgy\\KeyboardMethod";
+const wchar_t g_wszClassName[] = L"AlwaysEnglishIME";
+const wchar_t g_wszInstallKey[] = L"Software\\bsgy\\AlwaysEnglishIME";
+// Install-state key used while the product was named KeyboardMethod (1.1.x and earlier).
+// Read as a fallback when upgrading; deleted on register and on uninstall.
+const wchar_t g_wszLegacyInstallKey[] = L"Software\\bsgy\\KeyboardMethod";
 const wchar_t g_wszSidecarIconName[] = L"icon.ico";
 HMODULE g_hInst = NULL;
 LONG g_cRefDll = 0;

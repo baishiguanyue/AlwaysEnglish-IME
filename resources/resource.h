@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by KeyboardMethod.rc
+// Used by AlwaysEnglishIME.rc
 //
 
 #define IDI_KEYBOARD                    101

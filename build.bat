@@ -52,6 +52,6 @@ call installer\build.bat
 if errorlevel 1 exit /b 1
 
 echo.
-echo Packaged: %~dp0out\installer\KeyboardMethod-Setup.exe
+echo Packaged: %~dp0out\installer\AlwaysEnglish-IME-Setup.exe
 pause
 exit /b 0

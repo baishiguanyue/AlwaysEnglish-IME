@@ -1,4 +1,4 @@
-LIBRARY KeyboardMethod
+LIBRARY AlwaysEnglishIME
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE

@@ -2,10 +2,16 @@
   #define DistDir "..\out\build\x64-Release\bin\Release"
 #endif
 
-#define MyAppName "KeyboardMethod"
+#define MyAppName "AlwaysEnglish-IME"
 #define MyAppPublisher "bsgy"
 #define MyAppVersion "1.1.1"
 #define MyAppId "{{FC452B85-19F4-47E5-AD40-FD523298A8C7}"
+#define MyDllName "AlwaysEnglishIME.dll"
+; 1.1.x 及更早版本产品名为 KeyboardMethod，DLL 为 KeyboardMethod.dll，安装目录为
+; Program Files\KeyboardMethod。AppId/CLSID 不变，新版本可直接覆盖安装。
+; UsePreviousAppDir=no：升级也装到 {autopf}\AlwaysEnglish-IME；注册成功后清理旧目录残留。
+#define LegacyDllName "KeyboardMethod.dll"
+#define LegacyAppDirName "KeyboardMethod"
 
 [Setup]
 AppId={#MyAppId}
@@ -15,8 +21,9 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+UsePreviousAppDir=no
 OutputDir=..\out\installer
-OutputBaseFilename=KeyboardMethod-Setup
+OutputBaseFilename=AlwaysEnglish-IME-Setup
 LicenseFile=..\LICENSE
 Compression=lzma2
 SolidCompression=yes
@@ -43,7 +50,7 @@ english.LicenseLabel3=This is free software released under the GPL-3.0 license.%
 
 [Files]
 ; uninsrestartdelete: 卸载时 DLL 若仍被进程加载，排队到重启后删除，卸载程序会自动提示重启
-Source: "{#DistDir}\KeyboardMethod.dll"; DestDir: "{app}"; Flags: ignoreversion restartreplace uninsrestartdelete
+Source: "{#DistDir}\{#MyDllName}"; DestDir: "{app}"; Flags: ignoreversion restartreplace uninsrestartdelete
 Source: "{#DistDir}\imeinst.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\resources\icon.ico"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: CopyCustomIcon
@@ -57,10 +64,14 @@ Source: "..\resources\icon.ico"; DestDir: "{app}"; Flags: ignoreversion; AfterIn
 ; uninstall-tip 只能清理"运行卸载的这个账号"的语言列表(以及 .Default)。
 ; 若当初是用另一个管理员账号代装，原用户语言列表中的条目需由该用户在系统设置中自行移除；
 ; unregister 之后该 TIP 已不再注册，不会再被加载。
-; uninstall-tip 传 0：由 imeinst/DLL 在卸载时从 HKLM\Software\bsgy\KeyboardMethod 读取安装时保存的 LangId
-; (读不到时回退 0804)，而不是在卸载程序启动时由 [Code] 预先读取。
+; uninstall-tip 传 0：由 imeinst/DLL 在卸载时从 HKLM\Software\bsgy\AlwaysEnglishIME 读取安装时保存的 LangId
+; (读不到时再读旧键 HKLM\Software\bsgy\KeyboardMethod，仍读不到时回退 0804)，而不是在卸载程序启动时由 [Code] 预先读取。
 Filename: "{app}\imeinst.exe"; Parameters: "uninstall-tip 0"; Flags: waituntilterminated runhidden; RunOnceId: "UninstallTip"
 Filename: "{app}\imeinst.exe"; Parameters: "unregister"; Flags: waituntilterminated runhidden; RunOnceId: "UnregisterTip"
+
+[InstallDelete]
+; 新安装目录里若仍有旧名 DLL（少见），安装时一并删掉
+Type: files; Name: "{app}\{#LegacyDllName}"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
@@ -77,6 +88,8 @@ var
   LangIds: array of Integer;
   // 安装后步骤失败时的自定义退出码(0 = 成功)，通过 GetCustomSetupExitCode 返回
   PostInstallExitCode: Integer;
+  // 旧版 KeyboardMethod.dll 因占用只能排队到重启后删除时置 True，驱动 NeedRestart
+  LegacyDllNeedsReboot: Boolean;
 
 // 安全解析十六进制字符串,失败返回 False 而非抛异常(避免注册表脏数据打崩选项页)
 function SafeStrToInt(const S: String; var Value: Integer): Boolean;
@@ -456,6 +469,108 @@ begin
   Log('imeinst 退出码: ' + IntToStr(Result));
 end;
 
+// 删除指定路径的旧版 KeyboardMethod.dll。
+// register 已把 CLSID 的 InprocServer32 改指向新目录下的 AlwaysEnglishIME.dll，旧 DLL 不再被新进程加载。
+// 若仍被占用：RestartReplace 排队到重启后删除，并置 LegacyDllNeedsReboot，由 NeedRestart 提示重启。
+procedure RemoveLegacyDllFile(const OldDll: String);
+begin
+  if OldDll = '' then
+    Exit;
+  if not FileExists(OldDll) then
+    Exit;
+  if DeleteFile(OldDll) then
+  begin
+    Log('已删除旧版 DLL: ' + OldDll);
+    Exit;
+  end;
+  try
+    RestartReplace(OldDll, '');
+    LegacyDllNeedsReboot := True;
+    Log('旧版 DLL 正在被占用，已安排在重启后删除: ' + OldDll);
+  except
+    Log('无法删除旧版 DLL，也无法安排重启后删除: ' + OldDll + ' (' + GetExceptionMessage + ')');
+  end;
+end;
+
+// 删除普通文件（非 DLL）；失败只记日志，不强制排队重启。
+procedure TryDeleteLegacyFile(const FilePath: String);
+begin
+  if not FileExists(FilePath) then
+    Exit;
+  if DeleteFile(FilePath) then
+    Log('已删除旧安装目录文件: ' + FilePath)
+  else
+    Log('无法删除旧安装目录文件: ' + FilePath);
+end;
+
+// 清理 {autopf}\KeyboardMethod 中因改名迁出后留下的孤儿文件，并在空目录时 RemoveDir。
+procedure CleanupLegacyAppDir(const OldDir: String);
+var
+  FindRec: TFindRec;
+  Pattern, Found: String;
+begin
+  if (OldDir = '') or (not DirExists(OldDir)) then
+    Exit;
+
+  Log('清理旧安装目录: ' + OldDir);
+
+  // 仍可能在旧目录中的新 DLL（此前 UsePreviousAppDir=yes 的升级留下）
+  RemoveLegacyDllFile(OldDir + '\{#MyDllName}');
+  RemoveLegacyDllFile(OldDir + '\{#LegacyDllName}');
+
+  TryDeleteLegacyFile(OldDir + '\imeinst.exe');
+  TryDeleteLegacyFile(OldDir + '\LICENSE');
+  TryDeleteLegacyFile(OldDir + '\icon.ico');
+  TryDeleteLegacyFile(OldDir + '\unins000.exe');
+  TryDeleteLegacyFile(OldDir + '\unins000.dat');
+
+  Pattern := OldDir + '\unins000.*';
+  if FindFirst(Pattern, FindRec) then
+  begin
+    try
+      repeat
+        if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) = 0 then
+        begin
+          Found := OldDir + '\' + FindRec.Name;
+          TryDeleteLegacyFile(Found);
+        end;
+      until not FindNext(FindRec);
+    finally
+      FindClose(FindRec);
+    end;
+  end;
+
+  if RemoveDir(OldDir) then
+    Log('已删除空的旧安装目录: ' + OldDir)
+  else
+    Log('旧安装目录未空或无法删除（可能仍有占用文件，重启后可再删）: ' + OldDir);
+end;
+
+// 注册成功后 / 卸载收尾：清新 {app} 与旧 {autopf}\KeyboardMethod 中的旧 DLL，并尽量清空旧目录。
+procedure RemoveLegacyDll;
+var
+  AppLegacyDll, AutopfLegacyDll, AppDir, OldDir: String;
+begin
+  AppLegacyDll := ExpandConstant('{app}\{#LegacyDllName}');
+  AutopfLegacyDll := ExpandConstant('{autopf}\{#LegacyAppDirName}\{#LegacyDllName}');
+  AppDir := ExpandConstant('{app}');
+  OldDir := ExpandConstant('{autopf}\{#LegacyAppDirName}');
+
+  RemoveLegacyDllFile(AppLegacyDll);
+  if CompareText(AppLegacyDll, AutopfLegacyDll) <> 0 then
+    RemoveLegacyDllFile(AutopfLegacyDll);
+
+  if CompareText(AppDir, OldDir) <> 0 then
+    CleanupLegacyAppDir(OldDir);
+end;
+
+// 注意：Inno 在安装中段（保存卸载信息之前）就会调用 NeedRestart，早于 ssPostInstall。
+// 因此这里通常仍是 False；真正的重启提示改由 ssPostInstall 里的 MsgBox 承担。
+function NeedRestart(): Boolean;
+begin
+  Result := LegacyDllNeedsReboot;
+end;
+
 // 安装后步骤：register -> install-tip -> install-tip-default，严格按顺序，逐一检查退出码。
 // 此时文件已复制、卸载信息已定稿，失败无法回滚(Abort 在 ssPostInstall 不生效)，
 // 所以只如实报告错误，并让 Setup 以非 0 退出码结束。
@@ -480,6 +595,20 @@ begin
                        '文件已复制但输入法不可用。请查看安装日志，修复后重新运行安装程序，' +
                        '或在"应用"中卸载本程序。', mbError, MB_OK, IDOK);
     Exit;  // 未注册时加入语言列表没有意义
+  end;
+
+  // 注册成功后 CLSID 已指向新目录下的 AlwaysEnglishIME.dll；清理旧 DLL 与旧安装目录残留。
+  RemoveLegacyDll;
+  // NeedRestart 事件在 ssPostInstall 之前就被调用，那时还删不了旧 DLL，所以重启页不会出现。
+  // 这里在真正排队重启删除后，用对话框明确提示用户。
+  if LegacyDllNeedsReboot then
+  begin
+    Log('旧版 DLL 需重启后删除，弹出提示');
+    SuppressibleMsgBox(
+      '安装已完成，但旧版 KeyboardMethod.dll（或旧安装目录中的文件）仍被某些程序占用，' + #13#10 +
+      '已安排在下次重启 Windows 后自动删除。' + #13#10#13#10 +
+      '新版本已经可用；建议尽快重启电脑以完成清理。',
+      mbInformation, MB_OK, IDOK);
   end;
 
   if ShouldInstallTip then
@@ -563,20 +692,26 @@ end;
 
 function InitializeUninstall(): Boolean;
 var
-  DllPath: String;
+  DllName: String;
 begin
   Result := True;
-  DllPath := ExpandConstant('{app}\KeyboardMethod.dll');
-  if IsDllInUse(DllPath) then
+  // 同时检查从 KeyboardMethod 升级后可能残留(等待重启删除)的旧 DLL
+  if IsDllInUse(ExpandConstant('{app}\{#MyDllName}')) then
+    DllName := '{#MyDllName}'
+  else if IsDllInUse(ExpandConstant('{app}\{#LegacyDllName}')) then
+    DllName := '{#LegacyDllName}'
+  else
+    DllName := '';
+  if DllName <> '' then
   begin
     if UninstallSilent then
     begin
-      // 静默卸载不提问：继续卸载，被占用的 DLL 由 uninsrestartdelete 排队到重启后删除
-      Log('KeyboardMethod.dll 正在被占用，静默卸载继续，DLL 将在重启后删除');
+      // 静默卸载不提问：继续卸载，被占用的 DLL 排队到重启后删除
+      Log(DllName + ' 正在被占用，静默卸载继续，DLL 将在重启后删除');
       Exit;
     end;
     // SuppressibleMsgBox: 静默卸载(/SUPPRESSMSGBOXES)时默认按"是"继续，不会卡住
-    if SuppressibleMsgBox('检测到 KeyboardMethod.dll 正在被某些程序占用（可能正在使用该输入法）。' + #13#10#13#10 +
+    if SuppressibleMsgBox('检测到 ' + DllName + ' 正在被某些程序占用（可能正在使用该输入法）。' + #13#10#13#10 +
               '建议关闭所有正在使用本输入法的程序后再继续，' + #13#10 +
               '否则 DLL 会在重启后才被删除，这些程序在退出前会继续使用旧版本。' + #13#10#13#10 +
               '是否继续卸载？', mbConfirmation, MB_YESNO, IDYES) <> IDYES then
@@ -584,4 +719,12 @@ begin
       Result := False;
     end;
   end;
+end;
+
+// 卸载收尾：再清一次旧 DLL；若 {autopf}\KeyboardMethod 仍有残留也一并清理。
+// 新 DLL 由 [Files] 的 uninsrestartdelete 处理。
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RemoveLegacyDll;
 end;
